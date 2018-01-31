@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package protogen;
+
+service RegistrationApi {
+  rpc registerHosts (HostsRegistrationRequest) returns (HostsRegistrationResponse) {}
+  rpc deregisterHosts (HostsDeregistrationRequest) returns (HostsDeregistrationResponse) {}
+}
+
+message HostsRegistrationRequest {
+  repeated Host hosts = 1;
+}
+
+message HostsRegistrationResponse {}
+
+message HostsDeregistrationRequest {
+  repeated Host hosts = 1;
+}
+
+message HostsDeregistrationResponse {}
+
+message Host {
+  string address = 1;
+  uint32 port = 2;
+}

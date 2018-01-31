@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e -o pipefail
+
+protoc -I . registration.proto --go_out=plugins=grpc:protogen
