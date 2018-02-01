@@ -42,12 +42,13 @@ static_resources:
     http2_protocol_options: {}
   - name: test
     connect_timeout: { seconds: 5 }
-    type: STATIC
-    hosts:
-    - socket_address:
-        address: 127.0.0.1
-        port_value: 3000
+    type: EDS
     lb_policy: ROUND_ROBIN
+    eds_cluster_config:
+      eds_config:
+        api_config_source:
+          api_type: GRPC
+          cluster_names: [xds_cluster]
 admin:
   access_log_path: /dev/null
   address:
