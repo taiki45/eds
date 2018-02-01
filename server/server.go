@@ -41,7 +41,12 @@ func runResouceUpdator(ctx context.Context, c cache.Cache) {
 	i := 0
 	for {
 		version := fmt.Sprintf("version%d", i)
-		endpoint := makeEndpoint()
+		var endpoint *api.ClusterLoadAssignment
+		if i%2 == 0 {
+			endpoint = makeEndpoint(3000)
+		} else {
+			endpoint = makeEndpoint(2000)
+		}
 
 		glog.Infof("updating cache with %d-labelled responses", i)
 		snapshot := cache.NewSnapshot(version,
@@ -61,7 +66,7 @@ func runResouceUpdator(ctx context.Context, c cache.Cache) {
 
 }
 
-func makeEndpoint() *api.ClusterLoadAssignment {
+func makeEndpoint(port uint32) *api.ClusterLoadAssignment {
 	return &api.ClusterLoadAssignment{
 		ClusterName: "test",
 		Endpoints: []*api.LocalityLbEndpoints{{
@@ -73,7 +78,7 @@ func makeEndpoint() *api.ClusterLoadAssignment {
 								Protocol: api.SocketAddress_TCP,
 								Address:  "127.0.0.1",
 								PortSpecifier: &api.SocketAddress_PortValue{
-									PortValue: 3000,
+									PortValue: port,
 								},
 							},
 						},
