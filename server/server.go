@@ -2,53 +2,57 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 
 	"github.com/envoyproxy/go-control-plane/api"
-	pb "github.com/taiki45/eds/protogen"
+	"github.com/envoyproxy/go-control-plane/pkg/cache"
+	xds "github.com/envoyproxy/go-control-plane/pkg/server"
+	"github.com/golang/glog"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 const (
-	port = ":50051"
+	port = 4000
 )
 
-type server struct{}
-
-// registration
-func (s *server) RegisterHosts(ctx context.Context, in *pb.HostsRegistrationRequest) (*pb.HostsRegistrationResponse, error) {
-	return &pb.HostsRegistrationResponse{}, nil
+type nodeGroupHasher struct {
 }
 
-func (s *server) DeregisterHosts(ctx context.Context, in *pb.HostsDeregistrationRequest) (*pb.HostsDeregistrationResponse, error) {
-	return &pb.HostsDeregistrationResponse{}, nil
+// Hash function that always returns same value.
+func (h nodeGroupHasher) Hash(node *api.Node) (cache.Key, error) {
+	return cache.Key(node.Id), nil
 }
 
-// fetching
-func (s *server) FetchEndpoints(ctx context.Context, in *api.DiscoveryRequest) (*api.DiscoveryResponse, error) {
-	return &api.DiscoveryResponse{}, nil
-}
-
-func (s *server) StreamEndpoints(stream api.EndpointDiscoveryService_StreamEndpointsServer) error {
-	return nil
-}
-
-func (s *server) StreamLoadStats(stream api.EndpointDiscoveryService_StreamLoadStatsServer) error {
-	return nil
-}
-
+// Run server
 func Run() {
-	lis, err := net.Listen("tcp", port)
+	ctx := context.Background()
+	c := cache.NewSimpleCache(nodeGroupHasher{}, nil)
+	go runGrpcServer(ctx, c, port)
+	go runResouceUpdator(ctx, c)
+
+	<-ctx.Done()
+}
+
+func runResouceUpdator(ctx context.Context, c cache.Cache) {
+}
+
+// RunGrpcServer starts an xDS server at the given port.
+func runGrpcServer(ctx context.Context, c cache.Cache, port uint) {
+	server := xds.NewServer(c)
+	grpcServer := grpc.NewServer()
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		glog.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
-	pb.RegisterRegistrationApiServer(s, &server{})
-	api.RegisterEndpointDiscoveryServiceServer(s, &server{})
-	reflection.Register(s)
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	api.RegisterEndpointDiscoveryServiceServer(grpcServer, server)
+	log.Printf("Server listening on %d", port)
+	go func() {
+		if err = grpcServer.Serve(lis); err != nil {
+			glog.Error(err)
+		}
+	}()
+	<-ctx.Done()
+	grpcServer.GracefulStop()
 }
