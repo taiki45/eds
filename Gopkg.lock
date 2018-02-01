@@ -4,7 +4,11 @@
 [[projects]]
   branch = "master"
   name = "github.com/envoyproxy/go-control-plane"
-  packages = ["api"]
+  packages = [
+    "api",
+    "pkg/cache",
+    "pkg/server"
+  ]
   revision = "cd217031c55a80342a864f9aff3b7a7f22205891"
 
 [[projects]]
@@ -18,6 +22,12 @@
   ]
   revision = "342cbe0a04158f6dcb03ca0079991a51a4248c02"
   version = "v0.5"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/golang/glog"
+  packages = ["."]
+  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -119,6 +129,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "713394a7125eb33ebc493ab8bcfd4f06bbccdd1452ca19616b75a32ee94c0bac"
+  inputs-digest = "a221a7194609da8bee2c5ac554815f190ca93ed5c36d8048dcd81bb9d8be59ee"
   solver-name = "gps-cdcl"
   solver-version = 1
