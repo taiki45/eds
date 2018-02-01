@@ -41,23 +41,26 @@ func runResouceUpdator(ctx context.Context, c cache.Cache) {
 	i := 0
 	for {
 		version := fmt.Sprintf("version%d", i)
-		var endpoint *api.ClusterLoadAssignment
-		if i%2 == 0 {
-			endpoint = makeEndpoint(3000)
+		endpoint := makeEndpoint(3000)
+		if i%2 != 0 {
+			snapshot := cache.NewSnapshot(version,
+				[]proto.Message{endpoint},
+				[]proto.Message{},
+				[]proto.Message{},
+				[]proto.Message{})
+			c.SetSnapshot(cache.Key("TODO"), snapshot)
 		} else {
-			endpoint = makeEndpoint(2000)
+			snapshot := cache.NewSnapshot(version,
+				[]proto.Message{},
+				[]proto.Message{},
+				[]proto.Message{},
+				[]proto.Message{})
+			c.SetSnapshot(cache.Key("TODO"), snapshot)
 		}
 
 		glog.Infof("updating cache with %d-labelled responses", i)
-		snapshot := cache.NewSnapshot(version,
-			[]proto.Message{endpoint},
-			[]proto.Message{},
-			[]proto.Message{},
-			[]proto.Message{})
-		c.SetSnapshot(cache.Key("TODO"), snapshot)
-
 		select {
-		case <-time.After(10 * time.Second):
+		case <-time.After(30 * time.Second):
 		case <-ctx.Done():
 			return
 		}
